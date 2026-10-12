@@ -1,0 +1,70 @@
+# Copy to /etc/noray/noray.properties (mode 0640, owner root:noray)
+
+# where everything durable lives: keys, keyring, journal, blobs
+noray.data.dir=/var/lib/noray
+
+# --- network ---
+noray.net.udp.port=7777
+# the same 64 hex characters on every node of the mesh:  openssl rand -hex 32
+noray.net.mesh.psk=
+# while rotating the mesh key: the value it replaces (remove once every node has the new one)
+#noray.net.mesh.psk.previous=
+# cap on what this node sends to any single peer (KiB/s, 0 = none)
+#noray.net.peer.kib.s=0
+# make the datagrams look like random bytes (all nodes must agree)
+noray.net.obfuscate=false
+# padding bucket and dummy traffic (mean gap in ms, 0 = none)
+noray.net.pad.bucket=256
+noray.net.cover.interval.ms=0
+# reach other nodes through relays, and/or be one
+#noray.net.relay.enabled=false
+#noray.net.relay.peers=<relay node id>
+
+# --- storage ---
+# the passphrase of the keyring: prefer noray.keyring.passphrase.file or $NORAY_PASSPHRASE
+noray.keyring.passphrase.file=/etc/noray/passphrase
+# how much of this disk each peer may fill (MiB), and per-peer exceptions "<node id>:<MiB>,..."
+#noray.fs.blob.peer.quota.mib=10240
+#noray.fs.blob.peer.quota.overrides=
+#noray.fs.maintenance.interval.s=3600
+#noray.fs.health.interval.s=10
+
+# --- namespace replication (needs the passphrase and the managed identity) ---
+#noray.vault.enabled=true
+#noray.vault.copies=3
+#noray.vault.interval.s=60
+
+# --- integrity ---
+noray.witness.enabled=true
+# make the namespace read-only while an alarm about this node's own history stands
+#noray.witness.enforce=false
+
+# --- anonymous messages (onion cells over the mesh) ---
+#noray.net.onion.enabled=false
+#noray.net.onion.hops=2
+#noray.net.onion.min.hops=1
+#noray.net.onion.delay.ms=50
+#noray.net.onion.announce.s=30
+
+# --- observability ---
+# text (default) or json: one JSON object per line on stderr (journald, Loki...), secrets redacted
+noray.log.format=json
+#noray.log.level=INFO
+# Prometheus text on http://127.0.0.1:PORT/metrics (loopback only; 0 = off)
+noray.metrics.port=0
+
+# --- web UI (dashboard and module apps) ---
+# 0 = off. Loopback only unless noray.web.bind is changed; a non-loopback bind needs TLS.
+#noray.web.port=8787
+#noray.web.bind=127.0.0.1
+#noray.web.tls.keystore=/etc/noray/web.p12
+#noray.web.tls.password.file=/etc/noray/web.p12.pass
+# extra Host names the UI answers to (DNS-rebinding protection refuses others)
+#noray.web.hosts=noray.example.lan
+#noray.web.session.idle.min=30
+# noir (default) or harbour
+#noray.web.theme=noir
+# largest upload accepted through the UI
+#noray.web.upload.max.mib=64
+# serve public sites on their own port (own origin) instead of sandboxed on the dashboard's
+#noray.web.site.port=8080

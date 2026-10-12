@@ -1,0 +1,40 @@
+[Unit]
+Description=Noray node
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=noray
+Group=noray
+# installDist puts the launcher in /opt/noray/bin
+ExecStart=/opt/noray/bin/noray --daemon --config /etc/noray/noray.properties
+Restart=on-failure
+RestartSec=5
+# Java exits with 143 on SIGTERM after the clean shutdown hook ran
+SuccessExitStatus=143
+LimitNOFILE=65536
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/var/lib/noray
+StateDirectory=noray
+UMask=0027
+# Kernel-facing hardening. Namespaces are NOT restricted: the process sandbox (bubblewrap) needs unprivileged user
+# namespaces, and MemoryDenyWriteExecute would break the JIT.
+CapabilityBoundingSet=
+AmbientCapabilities=
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+ProtectClock=true
+LockPersonality=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX AF_NETLINK
+SystemCallArchitectures=native
+
+[Install]
+WantedBy=multi-user.target

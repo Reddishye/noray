@@ -1,0 +1,64 @@
+name: ci
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  schedule:
+    - cron: "17 3 * * 1"   # weekly long chaos run
+  workflow_dispatch:
+    inputs:
+      chaos_rounds:
+        description: "kill/restart rounds for RealClusterTest"
+        default: "200"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "24"
+          cache: gradle
+      - name: Allow unprivileged user namespaces (process sandbox tests)
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq bubblewrap
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0 || true
+      - name: Test
+        run: ./gradlew test --no-daemon
+      - name: Release artifacts (reproducible)
+        env:
+          SOURCE_DATE_EPOCH: "1760000000"
+        run: ./gradlew release -x test --no-daemon
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-reports
+          path: build/reports/tests/test
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release
+          path: build/release
+
+  chaos:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "24"
+          cache: gradle
+      - name: Long chaos run
+        run: >
+          ./gradlew test --no-daemon --tests '*RealClusterTest*'
+          -Dnoray.chaos.rounds=${{ github.event.inputs.chaos_rounds || '200' }}
+          -Dnoray.chaos.seed=${{ github.run_id }}
